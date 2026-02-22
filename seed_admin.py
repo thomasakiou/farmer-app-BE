@@ -14,14 +14,16 @@ def seed_admin():
             nin=admin_nin,
             email="admin@farmer.com",
             phone_number="08012345678",
-            hashed_password=get_password_hash("admin123"),
+            hashed_password=get_password_hash("password"),
             role=UserRole.ADMIN
         )
         db.add(admin_user)
-        db.commit()
-        print(f"Admin user created with NIN: {admin_nin} and password: admin123")
+        print(f"Admin user created with NIN: {admin_nin} and password: password")
     else:
-        print("Admin user already exists.")
+        admin_user.hashed_password = get_password_hash("password")
+        print(f"Admin password reset to: password")
+    
+    db.commit()
     db.close()
 
 if __name__ == "__main__":
