@@ -35,8 +35,13 @@ def create_farmer(
     db.commit()
     db.refresh(user)
     
+    # Generate BFD Farmer ID
+    last_farmer = db.query(Farmer).order_by(Farmer.id.desc()).first()
+    next_id_num = last_farmer.id + 1 if last_farmer else 1
+    generated_farmer_id = f"BFD-{next_id_num:05d}"
+    
     # 2. Create Farmer entry
-    farmer = Farmer(**farmer_in.dict(), user_id=user.id)
+    farmer = Farmer(**farmer_in.dict(), user_id=user.id, farmer_id=generated_farmer_id)
     db.add(farmer)
     db.commit()
     db.refresh(farmer)
@@ -142,6 +147,11 @@ async def upload_farmers(
         df = pd.read_csv(io.StringIO(contents.decode('utf-8'))) if file.filename.endswith('.csv') else pd.read_excel(io.BytesIO(contents))
         
         count = 0
+        
+        # Get the current highest ID before processing the batch to ensure sequential IDs
+        last_farmer = db.query(Farmer).order_by(Farmer.id.desc()).first()
+        next_id_num = last_farmer.id + 1 if last_farmer else 1
+        
         for _, row in df.iterrows():
             # Check if NIN already exists
             if db.query(User).filter(User.nin == str(row['nin'])).first():
@@ -159,7 +169,10 @@ async def upload_farmers(
             db.commit()
             db.refresh(user)
             
+            generated_farmer_id = f"BFD-{next_id_num:05d}"
+            
             farmer = Farmer(
+                farmer_id=generated_farmer_id,
                 user_id=user.id,
                 full_name=row['full_name'],
                 nin=str(row['nin']),
@@ -178,6 +191,7 @@ async def upload_farmers(
             )
             db.add(farmer)
             count += 1
+            next_id_num += 1 # Increment for the next iteration
         
         db.commit()
         return {"message": f"Successfully uploaded {count} farmers"}

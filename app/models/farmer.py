@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Date, Float, Enum, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, Date, Float, Enum, ForeignKey, event
+from sqlalchemy.orm import relationship, Session
 from app.db.session import Base
+from app.models.user import User
 import enum
 
 class FarmStatus(str, enum.Enum):
@@ -17,6 +18,7 @@ class Farmer(Base):
     __tablename__ = "farmers"
 
     id = Column(Integer, primary_key=True, index=True)
+    farmer_id = Column(String, unique=True, index=True) # E.g., BFD-23451
     user_id = Column(Integer, ForeignKey("users.id"), unique=True)
     
     full_name = Column(String, index=True)
@@ -43,3 +45,9 @@ class Farmer(Base):
     farmer_status = Column(Enum(FarmerStatus), default=FarmerStatus.PENDING)
 
     user = relationship("User", back_populates="farmer_profile")
+
+@event.listens_for(Farmer, 'after_delete')
+def delete_user_after_farmer_delete(mapper, connection, target):
+    session = Session(bind=connection)
+    session.query(User).filter(User.id == target.user_id).delete()
+    session.close()

@@ -5,7 +5,7 @@ from app.core.security import get_password_hash
 
 def seed_admin():
     db = SessionLocal()
-    admin_nin = "1234567890"
+    admin_nin = "12345678901"
     admin_user = db.query(User).filter(User.nin == admin_nin).first()
     
     if not admin_user:
@@ -13,7 +13,7 @@ def seed_admin():
             name="Admin User",
             nin=admin_nin,
             email="admin@farmer.com",
-            phone_number="08012345678",
+            phone_number="07040758238",
             hashed_password=get_password_hash("password"),
             role=UserRole.ADMIN
         )

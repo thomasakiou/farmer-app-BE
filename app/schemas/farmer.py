@@ -78,6 +78,7 @@ class FarmerUpdate(BaseModel):
 
 class FarmerOut(FarmerBase):
     id: int
+    farmer_id: str
     user_id: int
 
     class Config:
